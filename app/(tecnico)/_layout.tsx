@@ -5,7 +5,7 @@ export default function TecnicoLayout() {
     return (
         <Tabs
             screenOptions={{
-                headerShown: true,
+                headerShown: false,
                 tabBarActiveTintColor: '#0ea5e9',
                 tabBarInactiveTintColor: '#94a3b8',
             }}

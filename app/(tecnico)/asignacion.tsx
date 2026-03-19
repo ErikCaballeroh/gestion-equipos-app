@@ -64,7 +64,7 @@ export default function AdminAsignacion() {
   };
 
   return (
-    <View className="flex-1 bg-slate-50">
+    <View className="flex-1 bg-slate-50 pt-6">
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         <View className="p-4">
           {/* Header */}

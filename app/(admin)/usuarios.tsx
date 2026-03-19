@@ -21,9 +21,8 @@ const RoleBadge = ({ role }: { role: UserAccount['role'] }) => {
   const isAdmin = role === 'Administrador';
   return (
     <View
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs whitespace-nowrap ${
-        isAdmin ? 'bg-purple-100' : 'bg-blue-100'
-      }`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs whitespace-nowrap ${isAdmin ? 'bg-purple-100' : 'bg-blue-100'
+        }`}
     >
       <MaterialCommunityIcons
         name="shield-account"
@@ -101,7 +100,7 @@ export default function AdminUsuarios() {
   };
 
   return (
-    <View className="flex-1 bg-slate-50">
+    <View className="flex-1 bg-slate-50 pt-6">
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         <View className="p-4">
           {/* Header */}
@@ -196,9 +195,8 @@ export default function AdminUsuarios() {
                       <TouchableOpacity
                         key={role}
                         onPress={() => setFormData((prev) => ({ ...prev, role }))}
-                        className={`px-3 py-2 rounded-lg border ${
-                          formData.role === role ? 'bg-sky-500 border-sky-500' : 'bg-slate-50 border-slate-200'
-                        }`}
+                        className={`px-3 py-2 rounded-lg border ${formData.role === role ? 'bg-sky-500 border-sky-500' : 'bg-slate-50 border-slate-200'
+                          }`}
                       >
                         <Text className={`${formData.role === role ? 'text-white' : 'text-slate-900'}`}>
                           {role}
@@ -298,11 +296,10 @@ export function UserManagement() {
                     </p>
                   </div>
                   <span
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs whitespace-nowrap ${
-                      user.role === "Administrador"
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs whitespace-nowrap ${user.role === "Administrador"
                         ? "bg-purple-100 text-purple-700"
                         : "bg-blue-100 text-blue-700"
-                    }`}
+                      }`}
                   >
                     <Shield className="w-3.5 h-3.5" />
                     {user.role}

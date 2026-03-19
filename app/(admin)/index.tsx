@@ -21,7 +21,7 @@ export default function AdminDashboard() {
   const router = useRouter();
 
   return (
-    <ScrollView className="flex-1 bg-slate-50" contentContainerStyle={{ paddingBottom: 30 }}>
+    <ScrollView className="flex-1 bg-slate-50 pt-6" contentContainerStyle={{ paddingBottom: 30 }}>
       <View className="p-4">
         {/* Header */}
         <View className="flex-row items-center justify-between mb-6">
@@ -30,7 +30,7 @@ export default function AdminDashboard() {
             <Text className="text-sm text-slate-600">Panel de Administrador</Text>
           </View>
           <TouchableOpacity
-            onPress={() => router.push('/')}
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
             className="p-3 rounded-lg bg-white shadow-sm"
             accessibilityLabel="Cerrar sesión"
           >
