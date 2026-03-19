@@ -30,14 +30,41 @@ export default function LoginScreen() {
   return (
     <ScrollView className="flex-1 bg-gradient-to-b from-slate-50 to-slate-100">
       <View className="flex-1 justify-center items-center p-6 min-h-screen">
-        {/* Logo / Header */}
-        <View className="mb-8 items-center">
-          <View className="inline-flex items-center justify-center w-16 h-16 bg-sky-500 rounded-2xl mb-4">
-            <MaterialCommunityIcons name="laptop" size={32} color="white" />
-          </View>
-          <Text className="text-3xl font-bold text-slate-900 mb-2">Gestión de Equipos</Text>
-          <Text className="text-sm text-slate-600">Inicia sesión para continuar</Text>
-        </View>
+{/* Logo / Header */}
+<View className="mb-8 items-center">
+
+  {/* Logo tipo texto */}
+  <View className="items-center mb-3">
+    <Text className="text-5xl font-extrabold text-black tracking-widest">
+  <View className="flex-row items-center">
+  <Text className="text-5xl font-extrabold text-black tracking-widest">
+    GRH
+  </Text>
+
+  {/* 3 puntos amarillos */}
+  <View className="ml-2 justify-between h-6">
+    <View className="w-1.5 h-1.5 bg-yellow-400 rounded-full" />
+    <View className="w-1.5 h-1.5 bg-yellow-400 rounded-full" />
+    <View className="w-1.5 h-1.5 bg-yellow-400 rounded-full" />
+  </View>
+</View>
+    </Text>
+    <Text className="text-[10px] text-slate-500 tracking-[4px]">
+      INMOBILIARIA
+    </Text>
+  </View>
+
+  {/* Título */}
+  <Text className="text-2xl font-bold text-slate-900 mb-1">
+    Gestión de Equipos
+  </Text>
+
+  {/* Subtítulo */}
+  <Text className="text-sm text-slate-600">
+    Inicia sesión para continuar
+  </Text>
+
+</View>
 
         {/* Login Card */}
         <View className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-sm">
