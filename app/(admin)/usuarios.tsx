@@ -21,7 +21,7 @@ const RoleBadge = ({ role }: { role: UserAccount['role'] }) => {
   const isAdmin = role === 'Administrador';
   return (
     <View
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs whitespace-nowrap ${isAdmin ? 'bg-purple-100' : 'bg-blue-100'
+      className={`flex-row items-center gap-1.5 px-4 py-2 rounded-full ${isAdmin ? 'bg-purple-100' : 'bg-blue-100'
         }`}
     >
       <MaterialCommunityIcons
@@ -195,7 +195,7 @@ export default function AdminUsuarios() {
                       <TouchableOpacity
                         key={role}
                         onPress={() => setFormData((prev) => ({ ...prev, role }))}
-                        className={`px-3 py-2 rounded-lg border ${formData.role === role ? 'bg-sky-500 border-sky-500' : 'bg-slate-50 border-slate-200'
+                        className={`px-4 py-2 rounded-lg border ${formData.role === role ? 'bg-sky-500 border-sky-500' : 'bg-slate-50 border-slate-200'
                           }`}
                       >
                         <Text className={`${formData.role === role ? 'text-white' : 'text-slate-900'}`}>
@@ -226,188 +226,5 @@ export default function AdminUsuarios() {
         </View>
       </Modal>
     </View>
-  );
-}
-
-export function UserManagement() {
-  const navigate = useNavigate();
-  const [users, setUsers] = useState(mockUsers);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    role: "Técnico" as "Administrador" | "Técnico",
-  });
-
-  const handleCreateUser = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newUser: UserAccount = {
-      id: String(users.length + 1),
-      name: formData.name,
-      email: formData.email,
-      role: formData.role,
-    };
-    setUsers([...users, newUser]);
-    setShowCreateForm(false);
-    setFormData({ name: "", email: "", password: "", role: "Técnico" });
-  };
-
-  const handleDeleteUser = (id: string) => {
-    if (confirm("¿Estás seguro de eliminar este usuario?")) {
-      setUsers(users.filter((u) => u.id !== id));
-    }
-  };
-
-  return (
-    <div className="max-w-md mx-auto p-4">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
-        </button>
-        <div className="flex-1">
-          <h1 className="text-2xl text-primary">Usuarios</h1>
-          <p className="text-sm text-gray-600">{users.length} cuentas</p>
-        </div>
-      </div>
-
-      {/* Users List */}
-      <div className="space-y-3 mb-4">
-        {users.map((user) => (
-          <div
-            key={user.id}
-            className="bg-white rounded-xl p-4 shadow-sm border border-gray-100"
-          >
-            <div className="flex items-start gap-3">
-              <div className="p-3 bg-slate-50 rounded-lg">
-                <User className="w-6 h-6 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-primary truncate">{user.name}</h3>
-                    <p className="text-sm text-gray-600 truncate flex items-center gap-1">
-                      <Mail className="w-3.5 h-3.5" />
-                      {user.email}
-                    </p>
-                  </div>
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs whitespace-nowrap ${user.role === "Administrador"
-                        ? "bg-purple-100 text-purple-700"
-                        : "bg-blue-100 text-blue-700"
-                      }`}
-                  >
-                    <Shield className="w-3.5 h-3.5" />
-                    {user.role}
-                  </span>
-                </div>
-                <button
-                  onClick={() => handleDeleteUser(user.id)}
-                  className="text-xs text-red-600 hover:text-red-700"
-                >
-                  Eliminar
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Floating Action Button */}
-      <button
-        onClick={() => setShowCreateForm(true)}
-        className="fixed bottom-24 right-4 w-14 h-14 bg-primary text-white rounded-full shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors active:scale-95 transform z-40"
-      >
-        <Plus className="w-6 h-6" />
-      </button>
-
-      {/* Create User Modal */}
-      {showCreateForm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
-          <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md">
-            <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between rounded-t-2xl">
-              <h2 className="text-lg text-primary">Crear Cuenta</h2>
-              <button
-                onClick={() => setShowCreateForm(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            </div>
-            <form onSubmit={handleCreateUser} className="p-4 space-y-4">
-              <div>
-                <label className="block text-sm mb-1">Nombre</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Juan Pérez"
-                  required
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm mb-1">Email</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="juan.perez@empresa.com"
-                  required
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm mb-1">Contraseña</label>
-                <input
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="••••••••"
-                  required
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm mb-1">Rol</label>
-                <select
-                  value={formData.role}
-                  onChange={(e) =>
-                    setFormData({ ...formData, role: e.target.value as any })
-                  }
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                >
-                  <option value="Técnico">Técnico</option>
-                  <option value="Administrador">Administrador</option>
-                </select>
-              </div>
-
-              <div className="flex gap-2 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateForm(false)}
-                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-                >
-                  Crear
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
   );
 }

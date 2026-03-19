@@ -96,13 +96,6 @@ export default function LoginScreen() {
             <Text className="text-sky-500 font-semibold">¿Olvidaste tu contraseña?</Text>
           </TouchableOpacity>
         </View>
-
-        {/* Demo Info */}
-        <View className="mt-6 p-4 bg-blue-50 rounded-lg w-full max-w-sm border border-blue-200">
-          <Text className="text-sm text-slate-700 mb-2">
-            <Text className="font-semibold">Demo:</Text> Usa <Text className="font-semibold">admin@empresa.com</Text> para rol de administrador o cualquier otro email para técnico
-          </Text>
-        </View>
       </View>
     </ScrollView>
   );
