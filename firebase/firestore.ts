@@ -1,4 +1,3 @@
-// firebase/firestore.ts
 import {
     addDoc,
     collection,
