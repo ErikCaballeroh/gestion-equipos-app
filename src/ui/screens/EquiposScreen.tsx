@@ -55,7 +55,7 @@ function todayISO(): string {
 }
 
 export function EquiposScreen({ titlePrefix = '', onBack }: ScreenProps) {
-  const { state, addEquipment, unassignEquipment, setEquipmentStatus, reportDamage } = useAppStore();
+  const { state, addEquipment, updateEquipment, deleteEquipment, unassignEquipment, setEquipmentStatus, reportDamage } = useAppStore();
 
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState<(typeof typeOptions)[number]>('Todos');
@@ -64,6 +64,14 @@ export function EquiposScreen({ titlePrefix = '', onBack }: ScreenProps) {
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [addForm, setAddForm] = useState({
+    serialNumber: '',
+    type: 'Laptop' as EquipmentType,
+    brand: '',
+    model: '',
+  });
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editForm, setEditForm] = useState({
+    equipmentId: '',
     serialNumber: '',
     type: 'Laptop' as EquipmentType,
     brand: '',
@@ -121,6 +129,57 @@ export function EquiposScreen({ titlePrefix = '', onBack }: ScreenProps) {
 
   const openDetail = (id: string) => {
     setSelectedId(id);
+  };
+
+  const openEdit = () => {
+    if (!selected) return;
+
+    setEditForm({
+      equipmentId: selected.id,
+      serialNumber: selected.serialNumber,
+      type: selected.type,
+      brand: selected.brand,
+      model: selected.model,
+    });
+    setShowEditForm(true);
+  };
+
+  const handleEdit = async () => {
+    if (!editForm.equipmentId) return;
+
+    try {
+      await updateEquipment({
+        equipmentId: editForm.equipmentId,
+        serialNumber: editForm.serialNumber,
+        type: editForm.type,
+        brand: editForm.brand,
+        model: editForm.model,
+      });
+      setShowEditForm(false);
+      Alert.alert('Listo', 'Equipo actualizado');
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo actualizar el equipo');
+    }
+  };
+
+  const handleDelete = (equipmentId: string) => {
+    Alert.alert('Eliminar equipo', '¿Seguro que deseas eliminar este equipo?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Eliminar',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteEquipment(equipmentId);
+            setSelectedId(null);
+            setShowDamageModal(false);
+            Alert.alert('Listo', 'Equipo eliminado');
+          } catch (error) {
+            Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo eliminar el equipo');
+          }
+        },
+      },
+    ]);
   };
 
   const renderEquipmentItem = ({ item }: { item: (typeof state.equipments)[number] }) => (
@@ -315,6 +374,73 @@ export function EquiposScreen({ titlePrefix = '', onBack }: ScreenProps) {
         </View>
       </Modal>
 
+      <Modal visible={showEditForm} animationType="slide" transparent onRequestClose={() => setShowEditForm(false)}>
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="bg-white rounded-t-2xl max-h-[90%]">
+            <View className="p-4 border-b border-slate-200 flex-row items-center justify-between">
+              <Text className="text-lg font-semibold text-slate-900">Editar Equipo</Text>
+              <TouchableOpacity onPress={() => setShowEditForm(false)}>
+                <MaterialCommunityIcons name="close" size={24} color="#475569" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView className="p-4">
+              <View className="space-y-4">
+                <View>
+                  <Text className="text-sm font-semibold text-slate-900 mb-2">Número de Serie</Text>
+                  <TextInput
+                    value={editForm.serialNumber}
+                    onChangeText={(v) => setEditForm((p) => ({ ...p, serialNumber: v }))}
+                    placeholder="LAP-009"
+                    className="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg"
+                    placeholderTextColor="#64748b"
+                  />
+                </View>
+                <View>
+                  <Text className="text-sm font-semibold text-slate-900 mb-2">Tipo</Text>
+                  <View className="flex-row flex-wrap gap-2">
+                    {typeOptions
+                      .filter((t): t is EquipmentType => t !== 'Todos')
+                      .map((t) => (
+                        <TouchableOpacity
+                          key={t}
+                          onPress={() => setEditForm((p) => ({ ...p, type: t }))}
+                          className={`px-3 py-2 rounded-lg border ${editForm.type === t ? 'bg-sky-500 border-sky-500' : 'bg-slate-50 border-slate-200'}`}
+                        >
+                          <Text className={`text-sm ${editForm.type === t ? 'text-white' : 'text-slate-900'}`}>{t}</Text>
+                        </TouchableOpacity>
+                      ))}
+                  </View>
+                </View>
+                <View>
+                  <Text className="text-sm font-semibold text-slate-900 mb-2">Marca</Text>
+                  <TextInput
+                    value={editForm.brand}
+                    onChangeText={(v) => setEditForm((p) => ({ ...p, brand: v }))}
+                    placeholder="Dell, HP, Lenovo..."
+                    className="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg"
+                    placeholderTextColor="#64748b"
+                  />
+                </View>
+                <View>
+                  <Text className="text-sm font-semibold text-slate-900 mb-2">Modelo</Text>
+                  <TextInput
+                    value={editForm.model}
+                    onChangeText={(v) => setEditForm((p) => ({ ...p, model: v }))}
+                    placeholder="Latitude 5420"
+                    className="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg"
+                    placeholderTextColor="#64748b"
+                  />
+                </View>
+
+                <TouchableOpacity onPress={() => void handleEdit()} className="bg-sky-500 py-3 rounded-lg items-center mt-2">
+                  <Text className="text-white font-semibold">Guardar Cambios</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       <Modal visible={!!selected} animationType="slide" transparent onRequestClose={() => setSelectedId(null)}>
         <View className="flex-1 justify-end bg-black/50">
           <View className="bg-white rounded-t-2xl max-h-[90%]">
@@ -357,6 +483,26 @@ export function EquiposScreen({ titlePrefix = '', onBack }: ScreenProps) {
                   <View className="bg-white rounded-lg border border-slate-200 p-3">
                     <Text className="text-sm font-semibold text-slate-900 mb-2">Herramientas rápidas</Text>
                     <View className="flex-row flex-wrap gap-2">
+                      <TouchableOpacity
+                        onPress={openEdit}
+                        className="px-3 py-2 rounded-lg bg-blue-50 border border-blue-200"
+                      >
+                        <View className="flex-row items-center gap-2">
+                          <MaterialCommunityIcons name="pencil" size={16} color="#2563eb" />
+                          <Text className="text-sm text-blue-900">Editar</Text>
+                        </View>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        onPress={() => handleDelete(selected.id)}
+                        className="px-3 py-2 rounded-lg bg-rose-50 border border-rose-200"
+                      >
+                        <View className="flex-row items-center gap-2">
+                          <MaterialCommunityIcons name="delete" size={16} color="#dc2626" />
+                          <Text className="text-sm text-rose-900">Eliminar</Text>
+                        </View>
+                      </TouchableOpacity>
+
                       <TouchableOpacity
                         onPress={async () => {
                           try {

@@ -213,6 +213,14 @@ type Store = {
         model: string;
         createdAt: string;
     }) => Promise<void>;
+    updateEquipment: (payload: {
+        equipmentId: string;
+        serialNumber: string;
+        type: EquipmentType;
+        brand: string;
+        model: string;
+    }) => Promise<void>;
+    deleteEquipment: (equipmentId: string) => Promise<void>;
     addAccount: (payload: { name: string; email: string; role: UserRole; password: string }) => Promise<void>;
     deleteAccount: (id: string) => Promise<void>;
     assignEquipment: (payload: { equipmentId: string; userId: string; userName: string; area: string }) => Promise<void>;
@@ -343,7 +351,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                     throw new Error('Ya existe un equipo con ese número de serie');
                 }
 
-                await addDocument('equipments', {
+                const createdAt = payload.createdAt || todayISO();
+                const reference = await addDocument('equipments', {
                     serialNumber,
                     type: payload.type,
                     brand,
@@ -351,8 +360,80 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                     status: 'disponible',
                     assignedTo: null,
                     lastMaintenance: null,
-                    createdAt: payload.createdAt || todayISO(),
+                    createdAt,
                 });
+
+                setState((prev) => ({
+                    ...prev,
+                    equipments: [
+                        {
+                            id: reference.id,
+                            serialNumber,
+                            type: payload.type,
+                            brand,
+                            model,
+                            status: 'disponible',
+                            assignedTo: null,
+                            lastMaintenance: null,
+                            createdAt,
+                        },
+                        ...prev.equipments.filter((item) => item.id !== reference.id),
+                    ],
+                }));
+            },
+            updateEquipment: async (payload) => {
+                const serialNumber = payload.serialNumber.trim();
+                const brand = payload.brand.trim();
+                const model = payload.model.trim();
+
+                if (!serialNumber) throw new Error('Número de serie requerido');
+                if (!brand || !model) throw new Error('Marca y modelo son requeridos');
+
+                const existing = state.equipments.find((equipment) => equipment.id === payload.equipmentId);
+                if (!existing) throw new Error('Equipo no encontrado');
+
+                const duplicatedSerial = state.equipments.some(
+                    (equipment) =>
+                        equipment.id !== payload.equipmentId &&
+                        equipment.serialNumber.toLowerCase() === serialNumber.toLowerCase(),
+                );
+                if (duplicatedSerial) throw new Error('Ya existe otro equipo con ese número de serie');
+
+                await updateDocument('equipments', payload.equipmentId, {
+                    serialNumber,
+                    type: payload.type,
+                    brand,
+                    model,
+                });
+
+                setState((prev) => ({
+                    ...prev,
+                    equipments: prev.equipments.map((equipment) =>
+                        equipment.id === payload.equipmentId
+                            ? {
+                                ...equipment,
+                                serialNumber,
+                                type: payload.type,
+                                brand,
+                                model,
+                            }
+                            : equipment,
+                    ),
+                }));
+            },
+            deleteEquipment: async (equipmentId) => {
+                const existing = state.equipments.find((equipment) => equipment.id === equipmentId);
+                if (!existing) throw new Error('Equipo no encontrado');
+                if (existing.status === 'asignado') {
+                    throw new Error('No se puede eliminar un equipo asignado. Desasígnalo primero');
+                }
+
+                await deleteDocument('equipments', equipmentId);
+
+                setState((prev) => ({
+                    ...prev,
+                    equipments: prev.equipments.filter((equipment) => equipment.id !== equipmentId),
+                }));
             },
             addAccount: async (payload) => {
                 const name = payload.name.trim();
@@ -369,13 +450,27 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
                 const credential = await registerWithSecondaryAuth(email, password);
 
-                await addDocument('accounts', {
+                const reference = await addDocument('accounts', {
                     uid: credential.user.uid,
                     name,
                     email,
                     role: payload.role,
                     createdAt: todayISO(),
                 });
+
+                setState((prev) => ({
+                    ...prev,
+                    accounts: [
+                        {
+                            id: reference.id,
+                            uid: credential.user.uid,
+                            name,
+                            email,
+                            role: payload.role,
+                        },
+                        ...prev.accounts.filter((item) => item.id !== reference.id),
+                    ],
+                }));
             },
             deleteAccount: async (id) => {
                 const isAssigned = state.equipments.some((equipment) => equipment.assignedTo?.userId === id);
@@ -384,6 +479,11 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                 }
 
                 await deleteDocument('accounts', id);
+
+                setState((prev) => ({
+                    ...prev,
+                    accounts: prev.accounts.filter((item) => item.id !== id),
+                }));
             },
             assignEquipment: async (payload) => {
                 await updateDocument('equipments', payload.equipmentId, {
@@ -394,12 +494,42 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                         area: payload.area,
                     },
                 });
+
+                setState((prev) => ({
+                    ...prev,
+                    equipments: prev.equipments.map((item) =>
+                        item.id === payload.equipmentId
+                            ? {
+                                ...item,
+                                status: 'asignado',
+                                assignedTo: {
+                                    userId: payload.userId,
+                                    name: payload.userName,
+                                    area: payload.area,
+                                },
+                            }
+                            : item,
+                    ),
+                }));
             },
             unassignEquipment: async (equipmentId) => {
                 await updateDocument('equipments', equipmentId, {
                     status: 'disponible',
                     assignedTo: null,
                 });
+
+                setState((prev) => ({
+                    ...prev,
+                    equipments: prev.equipments.map((item) =>
+                        item.id === equipmentId
+                            ? {
+                                ...item,
+                                status: 'disponible',
+                                assignedTo: null,
+                            }
+                            : item,
+                    ),
+                }));
             },
             setEquipmentStatus: async (payload) => {
                 const existing = state.equipments.find((equipment) => equipment.id === payload.equipmentId);
@@ -409,6 +539,19 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                     status: payload.status,
                     assignedTo: payload.status === 'asignado' ? existing.assignedTo ?? null : null,
                 });
+
+                setState((prev) => ({
+                    ...prev,
+                    equipments: prev.equipments.map((item) =>
+                        item.id === payload.equipmentId
+                            ? {
+                                ...item,
+                                status: payload.status,
+                                assignedTo: payload.status === 'asignado' ? item.assignedTo ?? null : null,
+                            }
+                            : item,
+                    ),
+                }));
             },
             reportDamage: async (payload) => {
                 const equipment = state.equipments.find((item) => item.id === payload.equipmentId);
@@ -418,7 +561,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                     status: 'dañado',
                 });
 
-                await addDocument('history', {
+                const technician = payload.technician ?? currentAccount?.name ?? getCurrentUser()?.email ?? 'Sin técnico';
+                const historyRef = await addDocument('history', {
                     kind: 'incidente',
                     status: 'pendiente',
                     createdAt: payload.date,
@@ -426,8 +570,34 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                     equipmentSerialNumber: equipment.serialNumber,
                     title: `Equipo dañado (${equipment.serialNumber})`,
                     description: payload.description.trim(),
-                    technician: payload.technician ?? currentAccount?.name ?? getCurrentUser()?.email ?? 'Sin técnico',
+                    technician,
                 });
+
+                setState((prev) => ({
+                    ...prev,
+                    equipments: prev.equipments.map((item) =>
+                        item.id === equipment.id
+                            ? {
+                                ...item,
+                                status: 'dañado',
+                            }
+                            : item,
+                    ),
+                    history: [
+                        {
+                            id: historyRef.id,
+                            kind: 'incidente',
+                            status: 'pendiente',
+                            createdAt: payload.date,
+                            equipmentId: equipment.id,
+                            equipmentSerialNumber: equipment.serialNumber,
+                            title: `Equipo dañado (${equipment.serialNumber})`,
+                            description: payload.description.trim(),
+                            technician,
+                        },
+                        ...prev.history.filter((item) => item.id !== historyRef.id),
+                    ],
+                }));
             },
             registerMaintenance: async (payload) => {
                 const equipment = state.equipments.find((item) => item.id === payload.equipmentId);
@@ -441,7 +611,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                     lastMaintenance: isClosed ? payload.date : equipment.lastMaintenance ?? null,
                 });
 
-                await addDocument('history', {
+                const technician = payload.technician ?? currentAccount?.name ?? getCurrentUser()?.email ?? 'Sin técnico';
+                const historyRef = await addDocument('history', {
                     kind: 'mantenimiento',
                     status: isClosed ? 'resuelto' : 'en_proceso',
                     createdAt: payload.date,
@@ -451,9 +622,40 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                     title: `${payload.maintenanceType} - ${equipment.serialNumber}`,
                     description: payload.description.trim(),
                     maintenanceType: payload.maintenanceType,
-                    technician: payload.technician ?? currentAccount?.name ?? getCurrentUser()?.email ?? 'Sin técnico',
+                    technician,
                     resolution: isClosed ? payload.description.trim() : null,
                 });
+
+                setState((prev) => ({
+                    ...prev,
+                    equipments: prev.equipments.map((item) =>
+                        item.id === equipment.id
+                            ? {
+                                ...item,
+                                status: isClosed ? 'disponible' : 'mantenimiento',
+                                assignedTo: isClosed ? null : item.assignedTo ?? null,
+                                lastMaintenance: isClosed ? payload.date : item.lastMaintenance ?? null,
+                            }
+                            : item,
+                    ),
+                    history: [
+                        {
+                            id: historyRef.id,
+                            kind: 'mantenimiento',
+                            status: isClosed ? 'resuelto' : 'en_proceso',
+                            createdAt: payload.date,
+                            closedAt: isClosed ? payload.date : undefined,
+                            equipmentId: equipment.id,
+                            equipmentSerialNumber: equipment.serialNumber,
+                            title: `${payload.maintenanceType} - ${equipment.serialNumber}`,
+                            description: payload.description.trim(),
+                            maintenanceType: payload.maintenanceType,
+                            technician,
+                            resolution: isClosed ? payload.description.trim() : undefined,
+                        },
+                        ...prev.history.filter((item) => item.id !== historyRef.id),
+                    ],
+                }));
             },
         };
     }, [state, isAuthReady, currentAccount]);
