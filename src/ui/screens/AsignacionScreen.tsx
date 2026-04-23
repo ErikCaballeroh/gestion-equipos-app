@@ -50,22 +50,26 @@ export function AsignacionScreen({ titlePrefix = '', onBack }: ScreenProps) {
     [state.accounts, selectedAccountId],
   );
 
-  const handleAssign = () => {
+  const handleAssign = async () => {
     if (!selectedEq || !selectedAcc || !selectedArea) {
       Alert.alert('Error', 'Por favor completa todos los campos');
       return;
     }
-    assignEquipment({
-      equipmentId: selectedEq.id,
-      userId: selectedAcc.id,
-      userName: selectedAcc.name,
-      area: selectedArea,
-    });
-    Alert.alert('Asignación Exitosa', `Equipo ${selectedEq.serialNumber} asignado a ${selectedAcc.name} (${selectedArea})`);
-    setShowAssignForm(false);
-    setSelectedEquipmentId(null);
-    setSelectedAccountId(null);
-    setSelectedArea('');
+    try {
+      await assignEquipment({
+        equipmentId: selectedEq.id,
+        userId: selectedAcc.id,
+        userName: selectedAcc.name,
+        area: selectedArea,
+      });
+      Alert.alert('Asignación Exitosa', `Equipo ${selectedEq.serialNumber} asignado a ${selectedAcc.name} (${selectedArea})`);
+      setShowAssignForm(false);
+      setSelectedEquipmentId(null);
+      setSelectedAccountId(null);
+      setSelectedArea('');
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo asignar el equipo');
+    }
   };
 
   return (
@@ -207,7 +211,7 @@ export function AsignacionScreen({ titlePrefix = '', onBack }: ScreenProps) {
                     <Text className="text-slate-700 font-semibold">Cancelar</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    onPress={handleAssign}
+                    onPress={() => void handleAssign()}
                     className="flex-1 py-3 bg-sky-500 rounded-lg items-center"
                   >
                     <Text className="text-white font-semibold">Asignar</Text>

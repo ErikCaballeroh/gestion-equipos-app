@@ -1,16 +1,11 @@
+import { logout } from '@/firebase/auth';
+import { useAppStore } from '@/src/state/appStore';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useMemo } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 type IconName = keyof typeof MaterialCommunityIcons.glyphMap;
-
-const stats = [
-  { title: 'Total de Equipos', value: 48, icon: 'monitor', color: '#64748b' },
-  { title: 'Disponibles', value: 15, icon: 'check-circle', color: '#22c55e' },
-  { title: 'Asignados', value: 25, icon: 'account-check', color: '#0ea5e9' },
-  { title: 'En Mantenimiento', value: 5, icon: 'wrench', color: '#f59e0b' },
-  { title: 'Dañados', value: 3, icon: 'alert-circle', color: '#ef4444' },
-] satisfies { title: string; value: number; icon: IconName; color: string }[];
 
 const quickActions = [
   { title: 'Equipos', path: '/(tecnico)/equipos', icon: 'desktop-classic', bg: 'bg-blue-500' },
@@ -21,6 +16,47 @@ const quickActions = [
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const { state } = useAppStore();
+
+  const stats = useMemo(
+    () =>
+      [
+        { title: 'Total de Equipos', value: state.equipments.length, icon: 'monitor', color: '#64748b' },
+        {
+          title: 'Disponibles',
+          value: state.equipments.filter((equipment) => equipment.status === 'disponible').length,
+          icon: 'check-circle',
+          color: '#22c55e',
+        },
+        {
+          title: 'Asignados',
+          value: state.equipments.filter((equipment) => equipment.status === 'asignado').length,
+          icon: 'account-check',
+          color: '#0ea5e9',
+        },
+        {
+          title: 'En Mantenimiento',
+          value: state.equipments.filter((equipment) => equipment.status === 'mantenimiento').length,
+          icon: 'wrench',
+          color: '#f59e0b',
+        },
+        {
+          title: 'Dañados',
+          value: state.equipments.filter((equipment) => equipment.status === 'dañado').length,
+          icon: 'alert-circle',
+          color: '#ef4444',
+        },
+      ] satisfies { title: string; value: number; icon: IconName; color: string }[],
+    [state.equipments],
+  );
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      router.replace('/');
+    }
+  };
 
   return (
     <ScrollView className="flex-1 bg-slate-50 pt-6" contentContainerStyle={{ paddingBottom: 30 }}>
@@ -32,7 +68,7 @@ export default function AdminDashboard() {
             <Text className="text-sm text-slate-600">Panel de Técnico</Text>
           </View>
           <TouchableOpacity
-            onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+            onPress={() => void handleLogout()}
             className="p-3 rounded-lg bg-white shadow-sm"
             accessibilityLabel="Cerrar sesión"
           >
@@ -62,11 +98,11 @@ export default function AdminDashboard() {
           <Text className="text-lg font-semibold text-slate-900 mb-3">Accesos Rápidos</Text>
           <View className="flex-row flex-wrap justify-between gap-3">
             {quickActions.map((action) => (
-                <TouchableOpacity
-                  key={action.path}
-                  onPress={() => router.push(action.path as any)}
-                  className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 w-[48%]"
-                >
+              <TouchableOpacity
+                key={action.path}
+                onPress={() => router.push(action.path as any)}
+                className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 w-[48%]"
+              >
                 <View className={`${action.bg} w-12 h-12 rounded-lg items-center justify-center mb-3`}>
                   <MaterialCommunityIcons name={action.icon} size={22} color="white" />
                 </View>

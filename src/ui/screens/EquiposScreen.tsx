@@ -93,7 +93,7 @@ export function EquiposScreen({ titlePrefix = '', onBack }: ScreenProps) {
     });
   }, [state.equipments, search, filterType, filterStatus]);
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!addForm.serialNumber.trim()) {
       Alert.alert('Error', 'Número de serie requerido');
       return;
@@ -103,16 +103,20 @@ export function EquiposScreen({ titlePrefix = '', onBack }: ScreenProps) {
       return;
     }
 
-    addEquipment({
-      serialNumber: addForm.serialNumber,
-      type: addForm.type,
-      brand: addForm.brand,
-      model: addForm.model,
-      createdAt: todayISO(),
-    });
+    try {
+      await addEquipment({
+        serialNumber: addForm.serialNumber,
+        type: addForm.type,
+        brand: addForm.brand,
+        model: addForm.model,
+        createdAt: todayISO(),
+      });
 
-    setShowAddForm(false);
-    setAddForm({ serialNumber: '', type: 'Laptop', brand: '', model: '' });
+      setShowAddForm(false);
+      setAddForm({ serialNumber: '', type: 'Laptop', brand: '', model: '' });
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo agregar el equipo');
+    }
   };
 
   const openDetail = (id: string) => {
@@ -302,7 +306,7 @@ export function EquiposScreen({ titlePrefix = '', onBack }: ScreenProps) {
                   />
                 </View>
 
-                <TouchableOpacity onPress={handleAdd} className="bg-sky-500 py-3 rounded-lg items-center mt-2">
+                <TouchableOpacity onPress={() => void handleAdd()} className="bg-sky-500 py-3 rounded-lg items-center mt-2">
                   <Text className="text-white font-semibold">Agregar Equipo</Text>
                 </TouchableOpacity>
               </View>
@@ -354,10 +358,14 @@ export function EquiposScreen({ titlePrefix = '', onBack }: ScreenProps) {
                     <Text className="text-sm font-semibold text-slate-900 mb-2">Herramientas rápidas</Text>
                     <View className="flex-row flex-wrap gap-2">
                       <TouchableOpacity
-                        onPress={() => {
-                          setEquipmentStatus({ equipmentId: selected.id, status: 'mantenimiento' });
-                          Alert.alert('Listo', 'Equipo marcado como en mantenimiento');
-                          setSelectedId(null);
+                        onPress={async () => {
+                          try {
+                            await setEquipmentStatus({ equipmentId: selected.id, status: 'mantenimiento' });
+                            Alert.alert('Listo', 'Equipo marcado como en mantenimiento');
+                            setSelectedId(null);
+                          } catch (error) {
+                            Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo actualizar el equipo');
+                          }
                         }}
                         className="px-3 py-2 rounded-lg bg-amber-50 border border-amber-200"
                       >
@@ -382,10 +390,14 @@ export function EquiposScreen({ titlePrefix = '', onBack }: ScreenProps) {
 
                       {selected.status === 'asignado' ? (
                         <TouchableOpacity
-                          onPress={() => {
-                            unassignEquipment(selected.id);
-                            Alert.alert('Listo', 'Equipo desasignado y marcado disponible');
-                            setSelectedId(null);
+                          onPress={async () => {
+                            try {
+                              await unassignEquipment(selected.id);
+                              Alert.alert('Listo', 'Equipo desasignado y marcado disponible');
+                              setSelectedId(null);
+                            } catch (error) {
+                              Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo desasignar el equipo');
+                            }
                           }}
                           className="px-3 py-2 rounded-lg bg-slate-50 border border-slate-200"
                         >
@@ -431,16 +443,20 @@ export function EquiposScreen({ titlePrefix = '', onBack }: ScreenProps) {
                   />
                 </View>
                 <TouchableOpacity
-                  onPress={() => {
+                  onPress={async () => {
                     if (!selected) return;
                     if (!damageDescription.trim()) {
                       Alert.alert('Error', 'La descripción es obligatoria');
                       return;
                     }
-                    reportDamage({ equipmentId: selected.id, date: todayISO(), description: damageDescription });
-                    setShowDamageModal(false);
-                    setSelectedId(null);
-                    Alert.alert('Listo', 'Se registró el incidente y se agregó al historial');
+                    try {
+                      await reportDamage({ equipmentId: selected.id, date: todayISO(), description: damageDescription });
+                      setShowDamageModal(false);
+                      setSelectedId(null);
+                      Alert.alert('Listo', 'Se registró el incidente y se agregó al historial');
+                    } catch (error) {
+                      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo registrar el incidente');
+                    }
                   }}
                   className="bg-red-600 py-3 rounded-lg items-center"
                 >

@@ -86,49 +86,52 @@ export function MantenimientoScreen({ titlePrefix = '', onBack, technicianName }
     return true;
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!selected) return;
 
-    if (mode === 'register_maintenance') {
-      if (!requireDescription(description)) return;
-      registerMaintenance({
-        equipmentId: selected.id,
-        date,
-        maintenanceType,
-        description,
-        technician: technicianName,
-        close: closeAfterRegister,
-      });
-      Alert.alert(
-        'Guardado',
-        closeAfterRegister
-          ? 'Mantenimiento guardado y registrado en historial. Equipo marcado disponible.'
-          : 'Mantenimiento guardado y registrado en historial. Equipo permanece en mantenimiento.',
-      );
-    }
+    try {
+      if (mode === 'register_maintenance') {
+        if (!requireDescription(description)) return;
+        await registerMaintenance({
+          equipmentId: selected.id,
+          date,
+          maintenanceType,
+          description,
+          technician: technicianName,
+          close: closeAfterRegister,
+        });
+        Alert.alert(
+          'Guardado',
+          closeAfterRegister
+            ? 'Mantenimiento guardado y registrado en historial. Equipo marcado disponible.'
+            : 'Mantenimiento guardado y registrado en historial. Equipo permanece en mantenimiento.',
+        );
+      }
 
-    if (mode === 'mark_available') {
-      // Even when just marking available, we want a history entry. Use the maintenance register with Correctivo.
-      if (!requireDescription(description)) return;
-      registerMaintenance({
-        equipmentId: selected.id,
-        date,
-        maintenanceType: 'Correctivo',
-        description,
-        technician: technicianName,
-        close: true,
-      });
-      Alert.alert('Listo', 'Se marcó como disponible y se guardó en historial.');
-    }
+      if (mode === 'mark_available') {
+        if (!requireDescription(description)) return;
+        await registerMaintenance({
+          equipmentId: selected.id,
+          date,
+          maintenanceType: 'Correctivo',
+          description,
+          technician: technicianName,
+          close: true,
+        });
+        Alert.alert('Listo', 'Se marcó como disponible y se guardó en historial.');
+      }
 
-    if (mode === 'report_incident') {
-      if (!requireDescription(description)) return;
-      reportDamage({ equipmentId: selected.id, date, description, technician: technicianName });
-      Alert.alert('Listo', 'Incidente guardado en historial y equipo marcado como dañado.');
-    }
+      if (mode === 'report_incident') {
+        if (!requireDescription(description)) return;
+        await reportDamage({ equipmentId: selected.id, date, description, technician: technicianName });
+        Alert.alert('Listo', 'Incidente guardado en historial y equipo marcado como dañado.');
+      }
 
-    setShowActionModal(false);
-    setSelectedEquipmentId(null);
+      setShowActionModal(false);
+      setSelectedEquipmentId(null);
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo guardar el registro');
+    }
   };
 
   const EquipmentCard = ({ equipmentId }: { equipmentId: string }) => {
@@ -164,9 +167,13 @@ export function MantenimientoScreen({ titlePrefix = '', onBack, technicianName }
 
         <View className="flex-row flex-wrap gap-2 mt-3">
           <TouchableOpacity
-            onPress={() => {
-              setEquipmentStatus({ equipmentId: eq.id, status: 'mantenimiento' });
-              openAction(eq.id, 'register_maintenance');
+            onPress={async () => {
+              try {
+                await setEquipmentStatus({ equipmentId: eq.id, status: 'mantenimiento' });
+                openAction(eq.id, 'register_maintenance');
+              } catch (error) {
+                Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo actualizar el estado');
+              }
             }}
             className="px-3 py-2 rounded-lg bg-amber-50 border border-amber-200"
           >
@@ -374,9 +381,12 @@ export function MantenimientoScreen({ titlePrefix = '', onBack, technicianName }
 
                 {mode === 'report_incident' && selected ? (
                   <TouchableOpacity
-                    onPress={() => {
-                      // For incident reporting we immediately mark damaged as part of saving.
-                      setEquipmentStatus({ equipmentId: selected.id, status: 'dañado' });
+                    onPress={async () => {
+                      try {
+                        await setEquipmentStatus({ equipmentId: selected.id, status: 'dañado' });
+                      } catch (error) {
+                        Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo actualizar el estado');
+                      }
                     }}
                     className="bg-red-50 border border-red-200 rounded-lg p-3"
                   >
@@ -395,7 +405,7 @@ export function MantenimientoScreen({ titlePrefix = '', onBack, technicianName }
                     <Text className="text-slate-700 font-semibold">Cancelar</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    onPress={handleConfirm}
+                    onPress={() => void handleConfirm()}
                     className="flex-1 py-3 bg-sky-500 rounded-lg items-center"
                   >
                     <Text className="text-white font-semibold">Guardar</Text>
