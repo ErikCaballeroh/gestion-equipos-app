@@ -1,4 +1,4 @@
-import { getCurrentUser, registerWithSecondaryAuth, subscribeAuthState } from '@/firebase/auth';
+import { getCurrentUser, registerWithSecondaryAuth, sendPasswordReset, subscribeAuthState, updateMyPassword } from '@/firebase/auth';
 import { addDocument, deleteDocument, subscribeCollection, updateDocument } from '@/firebase/firestore';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
@@ -222,6 +222,9 @@ type Store = {
     }) => Promise<void>;
     deleteEquipment: (equipmentId: string) => Promise<void>;
     addAccount: (payload: { name: string; email: string; role: UserRole; password: string }) => Promise<void>;
+    updateAccount: (payload: { id: string; name: string; role: UserRole }) => Promise<void>;
+    requestAccountPasswordReset: (email: string) => Promise<void>;
+    updateCurrentAccountPassword: (payload: { accountId: string; currentPassword: string; newPassword: string }) => Promise<void>;
     deleteAccount: (id: string) => Promise<void>;
     assignEquipment: (payload: { equipmentId: string; userId: string; userName: string; area: string }) => Promise<void>;
     unassignEquipment: (equipmentId: string) => Promise<void>;
@@ -471,6 +474,46 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                         ...prev.accounts.filter((item) => item.id !== reference.id),
                     ],
                 }));
+            },
+            updateAccount: async (payload) => {
+                const name = payload.name.trim();
+
+                if (!name) throw new Error('Nombre requerido');
+
+                const existing = state.accounts.find((account) => account.id === payload.id);
+                if (!existing) throw new Error('Cuenta no encontrada');
+
+                await updateDocument('accounts', payload.id, {
+                    name,
+                    role: payload.role,
+                });
+
+                setState((prev) => ({
+                    ...prev,
+                    accounts: prev.accounts.map((account) =>
+                        account.id === payload.id
+                            ? {
+                                ...account,
+                                name,
+                                role: payload.role,
+                            }
+                            : account,
+                    ),
+                }));
+            },
+            requestAccountPasswordReset: async (email) => {
+                await sendPasswordReset(email);
+            },
+            updateCurrentAccountPassword: async (payload) => {
+                if (!currentAccount) {
+                    throw new Error('No hay una cuenta autenticada');
+                }
+
+                if (payload.accountId !== currentAccount.id) {
+                    throw new Error('Por seguridad, solo puedes cambiar la contraseña de tu propia cuenta desde la app');
+                }
+
+                await updateMyPassword(payload.currentPassword, payload.newPassword);
             },
             deleteAccount: async (id) => {
                 const isAssigned = state.equipments.some((equipment) => equipment.assignedTo?.userId === id);

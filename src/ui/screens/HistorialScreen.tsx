@@ -27,7 +27,6 @@ export function HistorialScreen({ titlePrefix = '', onBack }: ScreenProps) {
   const { state } = useAppStore();
   const [query, setQuery] = useState('');
   const [filterKind, setFilterKind] = useState<'Todos' | Kind>('Todos');
-  const [filterStatus, setFilterStatus] = useState<'Todos' | Status>('Todos');
   const [showFilters, setShowFilters] = useState(false);
   const [selected, setSelected] = useState<HistoryEntry | null>(null);
 
@@ -36,7 +35,6 @@ export function HistorialScreen({ titlePrefix = '', onBack }: ScreenProps) {
     return state.history
       .filter((item) => {
         if (filterKind !== 'Todos' && item.kind !== filterKind) return false;
-        if (filterStatus !== 'Todos' && item.status !== filterStatus) return false;
         if (!q) return true;
         const haystack = [
           item.equipmentSerialNumber,
@@ -52,7 +50,7 @@ export function HistorialScreen({ titlePrefix = '', onBack }: ScreenProps) {
       })
       .slice()
       .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-  }, [state.history, query, filterKind, filterStatus]);
+  }, [state.history, query, filterKind]);
 
   const renderItem = ({ item }: { item: HistoryEntry }) => {
     const s = statusMeta[item.status];
@@ -154,23 +152,6 @@ export function HistorialScreen({ titlePrefix = '', onBack }: ScreenProps) {
                     >
                       <Text className={`text-xs ${filterKind === k ? 'text-white' : 'text-slate-900'}`}>
                         {k === 'Todos' ? 'Todos' : kindMeta[k].label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              <View>
-                <Text className="text-sm font-semibold text-slate-900 mb-2">Estado</Text>
-                <View className="flex-row flex-wrap gap-2">
-                  {(['Todos', 'resuelto', 'en_proceso', 'pendiente'] as const).map((s) => (
-                    <TouchableOpacity
-                      key={s}
-                      onPress={() => setFilterStatus(s as any)}
-                      className={`px-3 py-1 rounded-full border ${filterStatus === s ? 'bg-sky-500 border-sky-500' : 'bg-slate-50 border-slate-200'}`}
-                    >
-                      <Text className={`text-xs ${filterStatus === s ? 'text-white' : 'text-slate-900'}`}>
-                        {s === 'Todos' ? 'Todos' : statusMeta[s].label}
                       </Text>
                     </TouchableOpacity>
                   ))}
