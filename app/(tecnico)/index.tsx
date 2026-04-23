@@ -2,19 +2,22 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
+type IconName = keyof typeof MaterialCommunityIcons.glyphMap;
+
 const stats = [
   { title: 'Total de Equipos', value: 48, icon: 'monitor', color: '#64748b' },
   { title: 'Disponibles', value: 15, icon: 'check-circle', color: '#22c55e' },
   { title: 'Asignados', value: 25, icon: 'account-check', color: '#0ea5e9' },
   { title: 'En Mantenimiento', value: 5, icon: 'wrench', color: '#f59e0b' },
   { title: 'Dañados', value: 3, icon: 'alert-circle', color: '#ef4444' },
-];
+] satisfies { title: string; value: number; icon: IconName; color: string }[];
 
 const quickActions = [
   { title: 'Equipos', path: '/(tecnico)/equipos', icon: 'desktop-classic', bg: 'bg-blue-500' },
   { title: 'Asignación', path: '/(tecnico)/asignacion', icon: 'account-cog', bg: 'bg-emerald-500' },
   { title: 'Mantenimiento', path: '/(tecnico)/mantenimiento', icon: 'wrench', bg: 'bg-amber-500' },
-];
+  { title: 'Historial', path: '/(tecnico)/historial', icon: 'history', bg: 'bg-slate-900' },
+] satisfies { title: string; path: string; icon: IconName; bg: string }[];
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -59,11 +62,11 @@ export default function AdminDashboard() {
           <Text className="text-lg font-semibold text-slate-900 mb-3">Accesos Rápidos</Text>
           <View className="flex-row flex-wrap justify-between gap-3">
             {quickActions.map((action) => (
-              <TouchableOpacity
-                key={action.path}
-                onPress={() => router.push(action.path)}
-                className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 w-[48%]"
-              >
+                <TouchableOpacity
+                  key={action.path}
+                  onPress={() => router.push(action.path as any)}
+                  className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 w-[48%]"
+                >
                 <View className={`${action.bg} w-12 h-12 rounded-lg items-center justify-center mb-3`}>
                   <MaterialCommunityIcons name={action.icon} size={22} color="white" />
                 </View>

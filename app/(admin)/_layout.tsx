@@ -51,6 +51,16 @@ export default function AdminLayout() {
                 }}
             />
             <Tabs.Screen
+                name="historial"
+                options={{
+                    title: 'Historial',
+                    tabBarIcon: ({ color }) => (
+                        <MaterialCommunityIcons name="history" size={24} color={color} />
+                    ),
+                    headerTitle: 'Historial de Mantenimiento',
+                }}
+            />
+            <Tabs.Screen
                 name="usuarios"
                 options={{
                     title: 'Usuarios',

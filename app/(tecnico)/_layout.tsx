@@ -50,6 +50,16 @@ export default function TecnicoLayout() {
                     headerTitle: 'Mantenimiento',
                 }}
             />
+            <Tabs.Screen
+                name="historial"
+                options={{
+                    title: 'Historial',
+                    tabBarIcon: ({ color }) => (
+                        <MaterialCommunityIcons name="history" size={24} color={color} />
+                    ),
+                    headerTitle: 'Historial de Mantenimiento',
+                }}
+            />
         </Tabs>
     );
 }
