@@ -1,6 +1,7 @@
 import { getCurrentUser, registerWithSecondaryAuth, sendPasswordReset, subscribeAuthState, updateMyPassword } from '@/firebase/auth';
 import { addDocument, deleteDocument, subscribeCollection, updateDocument } from '@/firebase/firestore';
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 export type UserRole = 'Administrador' | 'Técnico';
 
@@ -246,15 +247,26 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     const [state, setState] = useState<State>(emptyState);
     const [isAuthReady, setIsAuthReady] = useState(false);
     const [currentUid, setCurrentUid] = useState<string | null>(getCurrentUser()?.uid ?? null);
+    const wasAuthenticated = useRef(!!getCurrentUser());
+    const router = useRouter();
 
     useEffect(() => {
         const unsubscribe = subscribeAuthState((user) => {
+            const wasLoggedIn = wasAuthenticated.current;
+            wasAuthenticated.current = !!user;
+
             setCurrentUid(user?.uid ?? null);
             setIsAuthReady(true);
+
+            // If the user was previously logged in and now is null, they logged out.
+            // Navigate back to login to avoid rendering dashboard with no data.
+            if (wasLoggedIn && !user) {
+                router.replace('/login');
+            }
         });
 
         return unsubscribe;
-    }, []);
+    }, [router]);
 
     useEffect(() => {
         const unsubscribers: (() => void)[] = [];

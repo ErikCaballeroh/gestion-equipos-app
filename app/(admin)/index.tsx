@@ -54,8 +54,10 @@ export default function AdminDashboard() {
   const handleLogout = async () => {
     try {
       await logout();
-    } finally {
-      router.replace('/');
+      console.log('cerrando sesion');
+      router.replace('/login' as any);
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
     }
   };
 
